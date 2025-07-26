@@ -1,8 +1,12 @@
 import asyncio
 import os
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, Dict, Any
 
-from anthropic.types.beta import BetaToolBash20241022Param
+try:
+    from anthropic.types.beta import BetaToolBash20241022Param
+except ImportError:
+    # Fallback for when anthropic package is not available
+    BetaToolBash20241022Param = Dict[str, Any]
 
 from .base import BaseAnthropicTool, CLIResult, ToolError, ToolResult
 
@@ -142,7 +146,7 @@ class BashTool(BaseAnthropicTool):
 
         raise ToolError("no command provided.")
 
-    def to_params(self) -> BetaToolBash20241022Param:
+    def to_params(self):
         return {
             "type": self.api_type,
             "name": self.name,

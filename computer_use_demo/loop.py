@@ -58,7 +58,15 @@ SYSTEM_PROMPT = f"""<SYSTEM_CAPABILITY>
 <IMPORTANT>
 * When using Safari or other applications, if any startup wizards or prompts appear, **IGNORE THEM**. Do not interact with them. Instead, click on the address bar or the area where you can enter commands or URLs, and proceed with your task.
 * If the item you are looking at is a PDF, and after taking a single screenshot of the PDF it seems you want to read the entire document, instead of trying to continue to read the PDF from your screenshots and navigation, determine the URL, use `curl` to download the PDF, install and use `pdftotext` (you may need to install it via `brew install poppler`) to convert it to a text file, and then read that text file directly with your `str_replace_editor` tool.
-</IMPORTANT>"""
+</IMPORTANT>
+
+<GOAL>
+Your goal is to follow the instructions provided by the user, and at the end give a report of what worked as text,
+what did you struggle with, and what didn't behave as expected.
+
+If you are stuck, end the conversation with the report already.
+</GOAL>
+"""
 
 
 async def sampling_loop(

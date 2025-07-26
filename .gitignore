@@ -28,3 +28,5 @@ dist/
 
 # macOS Trash folder
 .Trash/
+
+screenshots/*

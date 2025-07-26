@@ -1,8 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass, fields, replace
-from typing import Any
+from typing import Any, Dict
 
-from anthropic.types.beta import BetaToolUnionParam
+try:
+    from anthropic.types.beta import BetaToolUnionParam
+except ImportError:
+    # Fallback for when anthropic package is not available
+    BetaToolUnionParam = Dict[str, Any]
 
 
 class BaseAnthropicTool(metaclass=ABCMeta):
@@ -14,9 +18,7 @@ class BaseAnthropicTool(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def to_params(
-        self,
-    ) -> BetaToolUnionParam:
+    def to_params(self):
         raise NotImplementedError
 
 

@@ -1,0 +1,12 @@
+[project]
+name = "claude-computer-use-macos"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "anthropic[bedrock,vertex]>=0.37.1",
+    "mcp[cli]>=1.12.2",
+    "pillow>=11.3.0",
+    "pyautogui>=0.9.54",
+]
