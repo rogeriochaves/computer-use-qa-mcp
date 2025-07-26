@@ -53,7 +53,7 @@ edit_tool = EditTool()
 
 
 @mcp.tool()
-async def run_quality_assurance(instructions_file_path: str) -> str:
+async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
     """
     This tool runs a quality assurance agent that and see and interact with the user screen to test the
     application.
@@ -66,13 +66,13 @@ async def run_quality_assurance(instructions_file_path: str) -> str:
     Use this tool every time after finishing a new feature or bug fix to ensure the application is working as expected.
 
     Args:
-        instructions_file_path: The path to the file containing the instructions for the QA agent.
+        instructions_absolute_file_path: The absolute path to the file containing the instructions for the QA agent.
 
     Returns:
         A natural language report from the QA agent of observations it found or issues that prevented it from progressing.
     """
 
-    file_content = open(instructions_file_path, "r").read()
+    file_content = open(instructions_absolute_file_path, "r").read()
 
     messages: list[BetaMessageParam] = [
         {
@@ -106,7 +106,7 @@ async def run_quality_assurance(instructions_file_path: str) -> str:
         )
 
     messages = await sampling_loop(
-        model="claude-4-sonnet-20250514",
+        model="claude-3-5-sonnet-20241022",
         provider=APIProvider.ANTHROPIC,
         system_prompt_suffix="",
         messages=messages,
@@ -135,5 +135,5 @@ async def run_quality_assurance(instructions_file_path: str) -> str:
 if __name__ == "__main__":
     # Run the MCP server
     logger.info("MCP server started")
-    # mcp.run(transport="stdio")
-    asyncio.run(run_quality_assurance("examples/langwatch_blog.md"))
+    mcp.run(transport="stdio")
+    # asyncio.run(run_quality_assurance("examples/langwatch_blog.md"))
