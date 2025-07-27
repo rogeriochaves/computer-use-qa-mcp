@@ -37,9 +37,13 @@ class ActionOverlay:
             self.root = tk.Tk()
 
             # Configure window to be always on top and frameless
-            self.root.attributes("-topmost", True)
+            # self.root.attributes("-topmost", True)
             self.root.attributes("-alpha", 0.8)  # Semi-transparent
             self.root.overrideredirect(True)  # Remove window decorations
+            self.root.wm_attributes("-topmost", True)
+
+            # Prevent the window from taking focus when shown
+            self.root.wm_attributes("-type", "utility")
 
             # Get screen dimensions
             screen_width = self.root.winfo_screenwidth()
@@ -69,7 +73,7 @@ class ActionOverlay:
             self.label.pack(expand=True, fill="both", padx=10, pady=10)
 
             # Start hidden
-            self.root.withdraw()
+            # self.root.withdraw()
 
             self._is_initialized = True
         except Exception as e:
@@ -91,13 +95,16 @@ class ActionOverlay:
                 return
 
             self.label.config(text=action_text)
-            self.root.deiconify()  # Show window
-            self.root.lift()  # Bring to front
-            self.is_showing = True
+            self.root.wm_attributes("-topmost", True)
+            self.root.attributes("-alpha", 0.8)
+            self.root.update()
 
-            # Hide after duration
-            if duration > 0:
-                self.root.after(int(duration * 1000), self.hide)
+            # Prevent focus stealing
+            self.root.focus_set = lambda: None  # Disable focus_set method
+
+            self.root.lift()
+            self.root.update()
+            self.is_showing = True
         except Exception as e:
             # Silently fail if GUI operations fail
             pass
@@ -108,7 +115,9 @@ class ActionOverlay:
             if not self.root:
                 return
 
-            self.root.withdraw()
+            # self.root.withdraw()
+            self.root.attributes("-alpha", 0)
+            self.root.update()
             self.is_showing = False
         except Exception as e:
             # Silently fail if GUI operations fail
