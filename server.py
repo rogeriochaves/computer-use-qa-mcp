@@ -100,7 +100,9 @@ def format_tool_action(tool_name: str, tool_input: dict) -> str:
                 "Space": "space",
                 "space": "space",
             }
-            formatted_key = key_mappings.get(text, text.lower())
+            formatted_key = key_mappings.get(
+                text, text if text.startswith("f") else text.lower()
+            )
             return formatted_key
         elif action == "screenshot":
             return "📸 screenshot"
@@ -221,8 +223,8 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
         return "No response from the QA agent"
 
     if not isinstance(last_message["content"], str):
-        if isinstance(last_message["content"], list) and len(last_message["content"]) > 0 and last_message["content"][0].type == "text": # type: ignore
-            return last_message["content"][0].text # type: ignore
+        if isinstance(last_message["content"], list) and len(last_message["content"]) > 0 and last_message["content"][0].type == "text":  # type: ignore
+            return last_message["content"][0].text  # type: ignore
         else:
             return str(last_message["content"])
 

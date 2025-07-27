@@ -94,7 +94,32 @@ class ActionOverlay:
             if not self.root or not self.label:
                 return
 
-            self.label.config(text=action_text)
+            # Count lines to determine if we need to adjust layout
+            lines = action_text.split('\n')
+            line_count = len(lines)
+
+            # Adjust text alignment based on line count
+            if line_count > 1:
+                justify = "left"
+            else:
+                justify = "center"
+
+            # Calculate required height based on line count
+            base_height = 80
+            line_height = 25  # Approximate height per line
+            required_height = max(base_height, line_count * line_height + 30)  # 30 for padding
+
+            # Get screen dimensions for positioning
+            screen_width = self.root.winfo_screenwidth()
+            overlay_width = 600
+            x = (screen_width - overlay_width) // 2
+            y = 50
+
+            # Update window geometry with new height
+            self.root.geometry(f"{overlay_width}x{required_height}+{x}+{y}")
+
+            # Update label configuration
+            self.label.config(text=action_text, justify=justify)
             self.root.wm_attributes("-topmost", True)
             self.root.attributes("-alpha", 0.8)
             self.root.update()
