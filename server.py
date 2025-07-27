@@ -9,7 +9,7 @@ from mcp.server.fastmcp import FastMCP
 from computer_use_demo.tools import BashTool, ComputerTool, EditTool, ToolResult
 from computer_use_demo.loop import sampling_loop, APIProvider
 from computer_use_demo.tools import ToolResult
-from computer_use_demo.tools.overlay import get_overlay
+from computer_use_demo.tools.overlay import get_overlay, cleanup_overlay
 from anthropic.types.beta import BetaMessage, BetaMessageParam
 from anthropic import APIResponse
 
@@ -200,19 +200,23 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
             + "\n",
         )
 
-    messages = await sampling_loop(
-        model="claude-3-5-sonnet-20241022",
-        provider=APIProvider.ANTHROPIC,
-        system_prompt_suffix="",
-        messages=messages,
-        output_callback=output_callback,
-        tool_output_callback=tool_output_callback,
-        api_response_callback=api_response_callback,
-        api_key=os.getenv("ANTHROPIC_API_KEY", ""),
-        only_n_most_recent_images=10,
-        max_tokens=4096,
-        tool_action_callback=tool_action_callback,
-    )
+    try:
+        messages = await sampling_loop(
+            model="claude-3-5-sonnet-20241022",
+            provider=APIProvider.ANTHROPIC,
+            system_prompt_suffix="",
+            messages=messages,
+            output_callback=output_callback,
+            tool_output_callback=tool_output_callback,
+            api_response_callback=api_response_callback,
+            api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            only_n_most_recent_images=10,
+            max_tokens=4096,
+            tool_action_callback=tool_action_callback,
+        )
+    finally:
+        # Hide overlay after sampling loop completes
+        overlay.hide()
 
     last_message = messages[-1]
 
@@ -220,8 +224,8 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
         return "No response from the QA agent"
 
     if not isinstance(last_message["content"], str):
-        if isinstance(last_message["content"], list) and len(last_message["content"]) > 0 and last_message["content"][0].type == "text":  # type: ignore
-            return last_message["content"][0].text  # type: ignore
+        if isinstance(last_message["content"], list) and len(last_message["content"]) > 0 and last_message["content"][0].type == "text": # type: ignore
+            return last_message["content"][0].text # type: ignore
         else:
             return str(last_message["content"])
 
