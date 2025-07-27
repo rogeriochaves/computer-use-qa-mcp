@@ -37,13 +37,15 @@ class ActionOverlay:
             self.root = tk.Tk()
 
             # Configure window to be always on top and frameless
-            # self.root.attributes("-topmost", True)
             self.root.attributes("-alpha", 0.8)  # Semi-transparent
             self.root.overrideredirect(True)  # Remove window decorations
             self.root.wm_attributes("-topmost", True)
 
-            # Prevent the window from taking focus when shown
+            # Make window non-interactive (click-through) on macOS
             self.root.wm_attributes("-type", "utility")
+
+            # Prevent the window from taking focus when shown
+            self.root.focus_set = lambda: None  # Disable focus_set method
 
             # Get screen dimensions
             screen_width = self.root.winfo_screenwidth()
@@ -51,11 +53,12 @@ class ActionOverlay:
 
             # Position at top center of screen
             overlay_width = 600
-            overlay_height = 80
+            overlay_height = 60
             x = (screen_width - overlay_width) // 2
             y = 50  # Near top of screen
 
-            self.root.geometry(f"{overlay_width}x{overlay_height}+{x}+{y}")
+            self.geometry = f"{overlay_width}x{overlay_height}+{x}+{y}"
+            self.root.geometry(self.geometry)
 
             # Configure background and styling
             self.root.configure(bg="black")
@@ -70,7 +73,7 @@ class ActionOverlay:
                 wraplength=550,
                 justify="center",
             )
-            self.label.pack(expand=True, fill="both", padx=10, pady=10)
+            self.label.pack(expand=True, fill="both", padx=5, pady=5)
 
             # Start hidden
             # self.root.withdraw()
@@ -95,7 +98,7 @@ class ActionOverlay:
                 return
 
             # Count lines to determine if we need to adjust layout
-            lines = action_text.split('\n')
+            lines = action_text.split("\n")
             line_count = len(lines)
 
             # Adjust text alignment based on line count
@@ -105,9 +108,11 @@ class ActionOverlay:
                 justify = "center"
 
             # Calculate required height based on line count
-            base_height = 80
+            base_height = 60
             line_height = 25  # Approximate height per line
-            required_height = max(base_height, line_count * line_height + 30)  # 30 for padding
+            required_height = max(
+                base_height, line_count * line_height + 30
+            )  # 30 for padding
 
             # Get screen dimensions for positioning
             screen_width = self.root.winfo_screenwidth()
@@ -116,16 +121,14 @@ class ActionOverlay:
             y = 50
 
             # Update window geometry with new height
-            self.root.geometry(f"{overlay_width}x{required_height}+{x}+{y}")
+            self.geometry = f"{overlay_width}x{required_height}+{x}+{y}"
+            self.root.geometry(self.geometry)
 
             # Update label configuration
             self.label.config(text=action_text, justify=justify)
             self.root.wm_attributes("-topmost", True)
             self.root.attributes("-alpha", 0.8)
             self.root.update()
-
-            # Prevent focus stealing
-            self.root.focus_set = lambda: None  # Disable focus_set method
 
             self.root.lift()
             self.root.update()
@@ -142,8 +145,22 @@ class ActionOverlay:
 
             # self.root.withdraw()
             self.root.attributes("-alpha", 0)
+            self.root.geometry("0x0+0+0")
             self.root.update()
             self.is_showing = False
+        except Exception as e:
+            # Silently fail if GUI operations fail
+            pass
+
+    def show(self):
+        """Show the overlay immediately."""
+        try:
+            if not self.root:
+                return
+            self.root.attributes("-alpha", 0.8)
+            self.root.geometry(self.geometry)
+            self.root.update()
+            self.is_showing = True
         except Exception as e:
             # Silently fail if GUI operations fail
             pass

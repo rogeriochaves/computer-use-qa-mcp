@@ -177,10 +177,7 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
         # Show concatenated actions in overlay
         combined_action = "\n".join(formatted_actions)
 
-        # Hide overlay for screenshot actions to avoid feedback loop
-        # if any(tool_input.get("action") == "screenshot" for _, tool_input in tool_uses if _ == "computer"):
-        #     overlay.hide()
-        # else:
+        # Show overlay for all actions - only hide during actual execution in computer tool
         overlay.show_action(combined_action, duration=1.0)
 
     def tool_output_callback(result: ToolResult, tool_use_id: str):

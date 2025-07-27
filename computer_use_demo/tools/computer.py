@@ -15,6 +15,7 @@ except ImportError:
 ToolParam = Dict[str, Any]
 
 from .base import BaseAnthropicTool, ToolError, ToolResult
+from .overlay import get_overlay
 
 OUTPUT_DIR = "/tmp/outputs"
 
@@ -93,6 +94,9 @@ class ComputerTool(BaseAnthropicTool):
             self.scale_factor = 1.0
             self.target_width = self.width
             self.target_height = self.height
+
+        # Initialize overlay for hiding during click actions
+        self.overlay = get_overlay()
 
 
     async def __call__(
@@ -174,8 +178,9 @@ class ComputerTool(BaseAnthropicTool):
                 await asyncio.to_thread(pyautogui.hotkey, *key_sequence)
                 return ToolResult(output=f"Key combination '{text}' pressed.")
             elif action == "type":
+                await asyncio.sleep(0.5)
                 await asyncio.to_thread(
-                    pyautogui.write, text, interval=TYPING_DELAY_MS / 1000.0
+                    pyautogui.write, text, interval=TYPING_DELAY_MS / 500.0
                 )
                 return ToolResult(output=f"Typed text: {text}")
 
@@ -192,20 +197,40 @@ class ComputerTool(BaseAnthropicTool):
                 raise ToolError(f"coordinate is not accepted for {action}")
 
             if action == "screenshot":
-                return await self.screenshot()
+                # Hide overlay during screenshot to avoid feedback loop
+                self.overlay.hide()
+                await asyncio.sleep(0.1)  # Small delay to ensure overlay is hidden
+                result = await self.screenshot()
+                self.overlay.show()
+                return result
             elif action == "cursor_position":
                 x, y = pyautogui.position()
                 x, y = self.scale_coordinates(ScalingSource.COMPUTER, int(x), int(y))
                 return ToolResult(output=f"X={x},Y={y}")
             else:
                 if action == "left_click":
-                    await asyncio.to_thread(pyautogui.click, button="left")
+                    # Hide overlay just before click to avoid interference
+                    self.overlay.hide()
+                    await asyncio.sleep(0.05)  # Brief delay
+                    result = await asyncio.to_thread(pyautogui.click, button="left")
+                    await asyncio.sleep(0.05)  # Brief delay after click
+                    self.overlay.show()
                     return ToolResult(output="Left click performed.")
                 elif action == "right_click":
-                    await asyncio.to_thread(pyautogui.click, button="right")
+                    # Hide overlay just before click to avoid interference
+                    self.overlay.hide()
+                    await asyncio.sleep(0.05)  # Brief delay
+                    result = await asyncio.to_thread(pyautogui.click, button="right")
+                    await asyncio.sleep(0.05)  # Brief delay after click
+                    self.overlay.show()
                     return ToolResult(output="Right click performed.")
                 elif action == "double_click":
-                    await asyncio.to_thread(pyautogui.doubleClick)
+                    # Hide overlay just before click to avoid interference
+                    self.overlay.hide()
+                    await asyncio.sleep(0.05)  # Brief delay
+                    result = await asyncio.to_thread(pyautogui.doubleClick)
+                    await asyncio.sleep(0.05)  # Brief delay after click
+                    self.overlay.show()
                     return ToolResult(output="Double click performed.")
 
         raise ToolError(f"Invalid action: {action}")
