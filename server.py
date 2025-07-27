@@ -8,8 +8,8 @@ from mcp.server.fastmcp import FastMCP
 
 from computer_use_demo.tools import BashTool, ComputerTool, EditTool, ToolResult
 from computer_use_demo.loop import sampling_loop, APIProvider
-from computer_use_demo.loop import sampling_loop, APIProvider
 from computer_use_demo.tools import ToolResult
+from computer_use_demo.tools.overlay import get_overlay
 from anthropic.types.beta import BetaMessage, BetaMessageParam
 from anthropic import APIResponse
 
@@ -51,6 +51,82 @@ computer_tool = ComputerTool()
 bash_tool = BashTool()
 edit_tool = EditTool()
 
+# Initialize overlay
+overlay = get_overlay()
+
+
+def format_tool_action(tool_name: str, tool_input: dict) -> str:
+    """
+    Format tool actions for display in the overlay.
+
+    Args:
+        tool_name: Name of the tool being executed
+        tool_input: Input parameters for the tool
+
+    Returns:
+        Formatted action string for overlay display
+    """
+    if tool_name == "bash":
+        command = tool_input.get("command", "")
+        return f"$ {command}"
+
+    elif tool_name == "computer":
+        action = tool_input.get("action", "")
+        text = tool_input.get("text", "")
+        coordinate = tool_input.get("coordinate", [])
+
+        if action == "mouse_move":
+            if coordinate:
+                return f"mouse_move ({coordinate[0]}, {coordinate[1]})"
+            return "mouse_move"
+        elif action == "left_click":
+            return "click"
+        elif action == "right_click":
+            return "right click"
+        elif action == "double_click":
+            return "double click"
+        elif action == "type":
+            return f'type "{text}"'
+        elif action == "key":
+            # Handle special key mappings
+            key_mappings = {
+                "Return": "enter ⏎",
+                "return": "enter ⏎",
+                "enter": "enter ⏎",
+                "Tab": "tab ⇥",
+                "tab": "tab ⇥",
+                "Escape": "esc",
+                "esc": "esc",
+                "Space": "space",
+                "space": "space",
+            }
+            formatted_key = key_mappings.get(text, text.lower())
+            return formatted_key
+        elif action == "screenshot":
+            return "📸 screenshot"
+        else:
+            return f"{action}" + (f" {text}" if text else "")
+
+    elif tool_name == "str_replace_editor":
+        command = tool_input.get("command", "")
+        path = tool_input.get("path", "")
+
+        if command == "view":
+            return f"📖 view {path}"
+        elif command == "create":
+            return f"📝 create {path}"
+        elif command == "str_replace":
+            return f"✏️ edit {path}"
+        elif command == "insert":
+            return f"➕ insert in {path}"
+        elif command == "undo_edit":
+            return f"↩️ undo {path}"
+        else:
+            return f"edit: {command} {path}"
+
+    # Fallback for unknown tools
+    return f"{tool_name}: {str(tool_input)[:50]}..."
+
 
 @mcp.tool()
 async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
@@ -85,6 +161,26 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
         if isinstance(content_block, dict) and content_block.get("type") == "text":
             logger.info("Assistant:" + content_block.get("text", ""))
 
+    def tool_action_callback(tool_uses: list[tuple[str, dict]]):
+        """Handle overlay display for tool actions."""
+        if not tool_uses:
+            return
+
+        # Format all actions and concatenate with newlines
+        formatted_actions = []
+        for tool_name, tool_input in tool_uses:
+            formatted_action = format_tool_action(tool_name, tool_input)
+            formatted_actions.append(formatted_action)
+
+        # Show concatenated actions in overlay
+        combined_action = "\n".join(formatted_actions)
+
+        # Hide overlay for screenshot actions to avoid feedback loop
+        # if any(tool_input.get("action") == "screenshot" for _, tool_input in tool_uses if _ == "computer"):
+        #     overlay.hide()
+        # else:
+        overlay.show_action(combined_action, duration=1.0)
+
     def tool_output_callback(result: ToolResult, tool_use_id: str):
         if result.output:
             logger.info(f"> Tool Output [{tool_use_id}]:\n{result.output}")
@@ -116,6 +212,7 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
         api_key=os.getenv("ANTHROPIC_API_KEY", ""),
         only_n_most_recent_images=10,
         max_tokens=4096,
+        tool_action_callback=tool_action_callback,
     )
 
     last_message = messages[-1]

@@ -15,7 +15,6 @@ except ImportError:
 ToolParam = Dict[str, Any]
 
 from .base import BaseAnthropicTool, ToolError, ToolResult
-from .overlay import get_overlay
 
 OUTPUT_DIR = "/tmp/outputs"
 
@@ -95,8 +94,6 @@ class ComputerTool(BaseAnthropicTool):
             self.target_width = self.width
             self.target_height = self.height
 
-        # Initialize overlay
-        self.overlay = get_overlay()
 
     async def __call__(
         self,
@@ -106,34 +103,11 @@ class ComputerTool(BaseAnthropicTool):
         coordinate: list[int] | None = None,
         **kwargs,
     ):
-        # Create action description for display
-        action_parts = [f"{action.capitalize()}:"]
-        if text:
-            action_parts.append(f"Text: {text}")
-        if coordinate:
-            action_parts.append(f"Position: {coordinate[0]}, {coordinate[1]}")
-
-        action_description = " ".join(action_parts)
-
-        if action == "key":
-            action_description = str(text).replace("+", " + ")
-        elif action == "type":
-            action_description = f'Typing: "{text}"'
-
         print(
             f"### Performing action: {action}"
             + (f", text: {text}" if text else "")
             + (f", coordinate: {coordinate}" if coordinate else "")
         )
-
-        # Show overlay for all actions except screenshot (to avoid feedback loop)
-        if action == "screenshot":
-            # Hide overlay before taking screenshot to avoid feedback loop
-            self.overlay.hide()
-            # Small delay to ensure overlay is hidden
-            await asyncio.sleep(0.1)
-        else:
-            self.overlay.show_action(action_description, duration=0.5)
 
         if action in ("mouse_move", "left_click_drag"):
             if coordinate is None:

@@ -81,6 +81,7 @@ async def sampling_loop(
     api_key: str,
     only_n_most_recent_images: int | None = None,
     max_tokens: int = 4096,
+    tool_action_callback: Callable[[list[tuple[str, dict[str, Any]]]], None] | None = None,
 ):
     """
     Agentic sampling loop for the assistant/tool interaction of computer use.
@@ -130,8 +131,20 @@ async def sampling_loop(
         )
 
         tool_result_content: list[BetaToolResultBlockParam] = []
+
+        # Collect all tool uses from this response to show together in overlay
+        tool_uses = []
         for content_block in cast(list[BetaContentBlock], response.content):
             output_callback(content_block)
+            if content_block.type == "tool_use":
+                tool_uses.append((content_block.name, cast(dict[str, Any], content_block.input)))
+
+        # Show all tool actions together in overlay if callback provided
+        if tool_action_callback and tool_uses:
+            tool_action_callback(tool_uses)
+
+        # Execute the tools
+        for content_block in cast(list[BetaContentBlock], response.content):
             if content_block.type == "tool_use":
                 result = await tool_collection.run(
                     name=content_block.name,
