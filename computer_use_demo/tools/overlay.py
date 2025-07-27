@@ -1,3 +1,9 @@
+from os import environ
+from pathlib import Path
+from sys import base_prefix
+
+environ["TCL_LIBRARY"] = str(Path(base_prefix) / "lib" / "tcl8.6")
+environ["TK_LIBRARY"] = str(Path(base_prefix) / "lib" / "tk8.6")
 import tkinter as tk
 from typing import Optional
 import threading
@@ -7,66 +13,69 @@ import time
 class ActionOverlay:
     """
     A macOS-compatible overlay that displays action text on top of all applications.
-    Uses Tkinter with topmost flag to ensure visibility above all windows.
+    Creates Tkinter widgets on the main thread to avoid NSWindow threading issues.
     """
 
     def __init__(self):
         self.root: Optional[tk.Tk] = None
         self.label: Optional[tk.Label] = None
         self.is_showing = False
+        self._is_initialized = False
         self._setup_overlay()
 
     def _setup_overlay(self):
-        """Initialize the overlay window."""
-        self.root = tk.Tk()
+        """Initialize the overlay window on the main thread."""
+        # Defer initialization until first use to ensure main thread
+        pass
 
-        # Configure window to be always on top and frameless
-        self.root.attributes("-topmost", True)
-        self.root.attributes("-alpha", 0.8)  # Semi-transparent
-        self.root.overrideredirect(True)  # Remove window decorations
+    def _ensure_initialized(self):
+        """Ensure the overlay is initialized (must be called from main thread)."""
+        if self._is_initialized:
+            return
 
-        # Get screen dimensions
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
+        try:
+            self.root = tk.Tk()
 
-        # Position at top center of screen
-        overlay_width = 600
-        overlay_height = 80
-        x = (screen_width - overlay_width) // 2
-        y = 50  # Near top of screen
+            # Configure window to be always on top and frameless
+            self.root.attributes("-topmost", True)
+            self.root.attributes("-alpha", 0.8)  # Semi-transparent
+            self.root.overrideredirect(True)  # Remove window decorations
 
-        self.root.geometry(f"{overlay_width}x{overlay_height}+{x}+{y}")
+            # Get screen dimensions
+            screen_width = self.root.winfo_screenwidth()
+            screen_height = self.root.winfo_screenheight()
 
-        # Configure background and styling
-        self.root.configure(bg="black")
+            # Position at top center of screen
+            overlay_width = 600
+            overlay_height = 80
+            x = (screen_width - overlay_width) // 2
+            y = 50  # Near top of screen
 
-        # Create label for text
-        self.label = tk.Label(
-            self.root,
-            text="",
-            font=("Helvetica", 16, "bold"),
-            fg="white",
-            bg="black",
-            wraplength=550,
-            justify="center",
-        )
-        self.label.pack(expand=True, fill="both", padx=10, pady=10)
+            self.root.geometry(f"{overlay_width}x{overlay_height}+{x}+{y}")
 
-        # Start hidden
-        self.root.withdraw()
+            # Configure background and styling
+            self.root.configure(bg="black")
 
-        # Start the Tkinter event loop in a separate thread
-        self._start_event_loop()
+            # Create label for text
+            self.label = tk.Label(
+                self.root,
+                text="",
+                font=("Helvetica", 16, "bold"),
+                fg="white",
+                bg="black",
+                wraplength=550,
+                justify="center",
+            )
+            self.label.pack(expand=True, fill="both", padx=10, pady=10)
 
-    def _start_event_loop(self):
-        """Start Tkinter event loop in a background thread."""
+            # Start hidden
+            self.root.withdraw()
 
-        def run_loop():
-            if self.root:
-                self.root.mainloop()
-
-        self.loop_thread = threading.Thread(target=run_loop, daemon=True)
-        self.loop_thread.start()
+            self._is_initialized = True
+        except Exception as e:
+            print(f"Warning: Could not initialize overlay: {e}")
+            self.root = None
+            self.label = None
 
     def show_action(self, action_text: str, duration: float = 0.5):
         """
@@ -76,54 +85,59 @@ class ActionOverlay:
             action_text: The text to display
             duration: How long to show the text (in seconds)
         """
-        if not self.root or not self.label:
-            return
+        try:
+            self._ensure_initialized()
+            if not self.root or not self.label:
+                return
 
-        def update_display():
-            if self.label and self.root:
-                self.label.config(text=action_text)
-                self.root.deiconify()  # Show window
-                self.root.lift()  # Bring to front
-                self.is_showing = True
+            self.label.config(text=action_text)
+            self.root.deiconify()  # Show window
+            self.root.lift()  # Bring to front
+            self.is_showing = True
 
-                # Hide after duration
-                if duration > 0:
-                    self.root.after(int(duration * 1000), self.hide)
-
-        # Schedule the update on the main thread
-        if self.root:
-            self.root.after(0, update_display)
+            # Hide after duration
+            if duration > 0:
+                self.root.after(int(duration * 1000), self.hide)
+        except Exception as e:
+            # Silently fail if GUI operations fail
+            pass
 
     def hide(self):
         """Hide the overlay immediately."""
-        if not self.root:
-            return
+        try:
+            if not self.root:
+                return
 
-        def hide_display():
-            if self.root:
-                self.root.withdraw()
-                self.is_showing = False
-
-        self.root.after(0, hide_display)
+            self.root.withdraw()
+            self.is_showing = False
+        except Exception as e:
+            # Silently fail if GUI operations fail
+            pass
 
     def update_text(self, text: str):
         """Update the displayed text without changing visibility."""
-        if not self.label or not self.root:
-            return
+        try:
+            self._ensure_initialized()
+            if not self.label:
+                return
 
-        def update_label():
-            if self.label:
-                self.label.config(text=text)
-
-        self.root.after(0, update_label)
+            self.label.config(text=text)
+        except Exception as e:
+            # Silently fail if GUI operations fail
+            pass
 
     def cleanup(self):
         """Clean up the overlay resources."""
-        if self.root:
-            self.root.quit()
-            self.root.destroy()
-            self.root = None
-            self.label = None
+        try:
+            if self.root:
+                self.root.quit()
+                self.root.destroy()
+                self.root = None
+                self.label = None
+                self._is_initialized = False
+        except Exception as e:
+            # Silently fail if cleanup fails
+            pass
 
 
 # Global overlay instance

@@ -33,21 +33,26 @@ async def main():
         print(f"Result: {result.output}")
         await asyncio.sleep(2)
 
-        # Test 2: Take a screenshot (overlay should hide)
-        print("\nTest 2: Taking screenshot (overlay should hide automatically)...")
-        result = await computer(action="screenshot")
-        print("✅ Screenshot taken! Notice the overlay was hidden during capture.")
-        await asyncio.sleep(1)
-
-        # Test 3: Simulate a key press
-        print("\nTest 3: Simulating key press (Command+Space)...")
+        # Test 2: Simulate a key press
+        print("\nTest 2: Simulating key press (Command+Space)...")
         result = await computer(action="key", text="command+space")
         print(f"Result: {result.output}")
         await asyncio.sleep(2)
 
-        # Test 4: Type some text
-        print("\nTest 4: Typing text...")
+        # Test 3: Type some text
+        print("\nTest 3: Typing text...")
         result = await computer(action="type", text="Hello from overlay!")
+        print(f"Result: {result.output}")
+        await asyncio.sleep(2)
+
+        # Test 4: Take a screenshot (overlay should hide)
+        print("\nTest 4: Taking screenshot (overlay should hide automatically)...")
+        result = await computer(action="screenshot")
+        print("✅ Screenshot taken! Notice the overlay was hidden during capture.")
+        await asyncio.sleep(1)
+
+        print("\nTest 5: Typing text again...")
+        result = await computer(action="type", text="Second test!")
         print(f"Result: {result.output}")
         await asyncio.sleep(2)
 
