@@ -79,7 +79,7 @@ Then call the `qa_agent` mcp tool with the quality_assurance doc to be tested
 3. Create a file to run your first test, for example, save this to `quality_assurance/1_sample.md`:
 
 ```markdown
-1. Open the browser and go to https://github.com/rogeriochaves/computer-use-qa-mcp
+1. Open Chrome and go to https://github.com/rogeriochaves/computer-use-qa-mcp
 2. Hit the star button
 ```
 

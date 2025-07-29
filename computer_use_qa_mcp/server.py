@@ -5,6 +5,7 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Literal, cast
 from mcp.server.fastmcp import FastMCP
+import pyautogui
 
 from computer_use_qa_mcp.tools import BashTool, ComputerTool, EditTool, ToolResult
 from computer_use_qa_mcp.loop import sampling_loop, APIProvider
@@ -214,6 +215,8 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
             max_tokens=4096,
             tool_action_callback=tool_action_callback,
         )
+
+        await asyncio.to_thread(pyautogui.hotkey, "command", "tab")
     finally:
         # Hide overlay after sampling loop completes
         overlay.hide()

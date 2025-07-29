@@ -178,7 +178,7 @@ wheels = [
 
 [[package]]
 name = "computer-use-qa-mcp"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic", extra = ["bedrock", "vertex"] },
