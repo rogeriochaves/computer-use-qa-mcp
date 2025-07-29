@@ -1,6 +1,6 @@
 import asyncio
 
-from server import run_quality_assurance
+from computer_use_qa_mcp.server import run_quality_assurance
 
 
 if __name__ == "__main__":
