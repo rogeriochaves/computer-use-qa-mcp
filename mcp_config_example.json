@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "qa_agent": {
+      "command": "uvx",
+      "args": [
+        "computer-use-qa-mcp"
+      ],
+      "env": {
+        "ANTHROPIC_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}

@@ -6,10 +6,10 @@ import os
 from typing import Any, Dict, List, Optional, Literal, cast
 from mcp.server.fastmcp import FastMCP
 
-from computer_use_demo.tools import BashTool, ComputerTool, EditTool, ToolResult
-from computer_use_demo.loop import sampling_loop, APIProvider
-from computer_use_demo.tools import ToolResult
-from computer_use_demo.tools.overlay import get_overlay, cleanup_overlay
+from computer_use_qa_mcp.tools import BashTool, ComputerTool, EditTool, ToolResult
+from computer_use_qa_mcp.loop import sampling_loop, APIProvider
+from computer_use_qa_mcp.tools import ToolResult
+from computer_use_qa_mcp.tools.overlay import get_overlay, cleanup_overlay
 from anthropic.types.beta import BetaMessage, BetaMessageParam
 from anthropic import APIResponse
 
@@ -232,8 +232,11 @@ async def run_quality_assurance(instructions_absolute_file_path: str) -> str:
     return last_message["content"]
 
 
-if __name__ == "__main__":
-    # Run the MCP server
+def main():
+    """Main entry point for the MCP server."""
     logger.info("MCP server started")
     mcp.run(transport="stdio")
-    # asyncio.run(run_quality_assurance("examples/langwatch_blog.md"))
+
+
+if __name__ == "__main__":
+    main()

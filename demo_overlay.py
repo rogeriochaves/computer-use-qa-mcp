@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 # Direct imports to avoid anthropic dependency issues
-from computer_use_demo.tools.computer import ComputerTool
+from computer_use_qa_mcp.tools.computer import ComputerTool
 
 
 async def main():
